@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我们的故事 - 专属故事书生成器</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans SC', sans-serif; line-height: 1.6; background: #f5f5f5; color: #333; min-height: 100vh; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; position: relative; }
+        .container { max-width: 800px; width: 100%; padding: 20px; margin: 20px auto; position: relative; z-index: 1; }
+        .form-container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 30px; }
+        .story-container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); display: none; }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; font-size: 2em; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 500; }
+        input[type="text"], input[type="date"] { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; }
+        input[type="text"]:focus, input[type="date"]:focus { border-color: #3498db; outline: none; }
+        button { background: #3498db; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; transition: background 0.3s; width: 100%; }
+        button:hover { background: #2980b9; }
+        .story-content { font-size: 18px; line-height: 1.8; color: #2c3e50; text-align: justify; margin-bottom: 30px; white-space: pre-line; }
+        .story-actions { display: flex; gap: 15px; justify-content: center; }
+        .story-actions button { width: auto; }
+
+        .rose {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            width: 80px;
+            height: 100px;
+            animation: rose-animation 3s ease-out forwards;
+            transform-origin: center bottom;
+        }
+
+        .rose::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 30px;
+            background: linear-gradient(to bottom, #2d5a27 0%, #1a3d19 60%, #0a1f0c 100%);
+            border-radius: 3px;
+            box-shadow: -2px 0 3px rgba(0, 0, 0, 0.2), 2px 0 3px rgba(0, 0, 0, 0.2);
+            transform: rotate(-5deg);
+        }
+
+        .rose::after {
+            content: '';
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-15deg);
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at center, #ff1744 0%, #e91e63 40%, #d81b60 70%, #c2185b 100%);
+            border-radius: 50% 50% 50% 50%;
+            box-shadow: -20px -20px 0 -8px #ff1744, 20px -20px 0 -8px #ff1744, -10px -30px 0 -8px #e91e63, 10px -30px 0 -8px #e91e63, 0px -35px 0 -8px #d81b60, -25px -10px 0 -10px #c2185b, 25px -10px 0 -10px #c2185b, 0px 15px 0 -10px #c2185b;
+            filter: drop-shadow(0 0 10px rgba(255, 23, 68, 0.3));
+            animation: bloom 2s ease-out forwards;
+        }
+
+        .rose-leaf {
+            position: absolute;
+            background: linear-gradient(45deg, #2d5a27 0%, #1a3d19 60%, #0a1f0c 100%);
+            border-radius: 50% 10% 50% 10%;
+            box-shadow: inset -2px -2px 4px rgba(0, 0, 0, 0.3), inset 2px 2px 4px rgba(255, 255, 255, 0.3);
+            animation: leaf-wave 3s ease-in-out infinite;
+        }
+
+        .rose-leaf:nth-child(1) {
+            bottom: 15px;
+            left: -15px;
+            width: 25px;
+            height: 35px;
+            transform: rotate(-45deg) skew(-10deg);
+        }
+
+        .rose-leaf:nth-child(2) {
+            bottom: 18px;
+            right: -15px;
+            width: 25px;
+            height: 35px;
+            transform: rotate(45deg) skew(10deg) scaleX(-1);
+        }
+
+        .rose-leaf:nth-child(3) {
+            bottom: 15px;
+            left: -10px;
+            width: 20px;
+            height: 30px;
+            transform: rotate(-25deg) skew(-5deg);
+        }
+
+        .rose-leaf:nth-child(4) {
+            bottom: 18px;
+            right: -10px;
+            width: 20px;
+            height: 30px;
+            transform: rotate(25deg) skew(5deg) scaleX(-1);
+        }
+
+        @keyframes rose-animation {
+            0% { transform: scale(0) rotate(45deg) translateY(200px); opacity: 0; }
+            30% { transform: scale(1.2) rotate(-10deg) translateY(0); opacity: 1; }
+            50% { transform: scale(1) rotate(0deg) translateY(0); opacity: 1; }
+            75% { transform: scale(1.1) rotate(-5deg) translateY(-50px); opacity: 0.8; }
+            100% { transform: scale(0.8) rotate(-30deg) translateY(-200px); opacity: 0; }
+        }
+
+        @keyframes bloom {
+            0% { transform: translateX(-50%) scale(0) rotate(45deg); filter: brightness(1.5) drop-shadow(0 0 20px rgba(255, 23, 68, 0.5)); }
+            50% { transform: translateX(-50%) scale(1.3) rotate(-10deg); filter: brightness(1.2) drop-shadow(0 0 15px rgba(255, 23, 68, 0.4)); }
+            75% { transform: translateX(-50%) scale(1.1) rotate(-5deg); filter: brightness(1.1) drop-shadow(0 0 10px rgba(255, 23, 68, 0.3)); }
+            100% { transform: translateX(-50%) scale(1) rotate(0deg); filter: brightness(1) drop-shadow(0 0 5px rgba(255, 23, 68, 0.2)); }
+        }
+
+        @keyframes leaf-wave {
+            0%, 100% { transform: rotate(-45deg) skew(-10deg); }
+            50% { transform: rotate(-40deg) skew(-8deg); }
+        }
+
+        @media print {
+            body { background: white; }
+            .form-container, .story-actions, .rose { display: none; }
+            .story-container { box-shadow: none; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h1>创建你们的专属故事</h1>
+            <div class="form-group">
+                <label for="name1">你的名字</label>
+                <input type="text" id="name1" required>
+            </div>
+            <div class="form-group">
+                <label for="name2">她的名字</label>
+                <input type="text" id="name2" required>
+            </div>
+            <div class="form-group">
+                <label for="meetDate">相识的日期</label>
+                <input type="date" id="meetDate" required>
+            </div>
+            <button onclick="generateStory()">生成我们的故事</button>
+        </div>
+
+        <div class="story-container" id="storyContainer">
+            <h1>我们的故事</h1>
+            <div class="story-content" id="storyContent"></div>
+            <div class="story-actions">
+                <button onclick="window.print()">导出为PDF</button>
+                <button onclick="saveAsWebPage()">保存为网页</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function createRose() {
+            const rose = document.createElement('div');
+            rose.className = 'rose';
+            
+            for(let i = 0; i < 4; i++) {
+                const leaf = document.createElement('div');
+                leaf.className = 'rose-leaf';
+                rose.appendChild(leaf);
+            }
+            
+            rose.style.left = Math.random() * (window.innerWidth - 150) + 'px';
+            rose.style.top = Math.random() * (window.innerHeight - 150) + 'px';
+            document.body.appendChild(rose);
+
+            setTimeout(() => {
+                document.body.removeChild(rose);
+            }, 3000);
+        }
+
+        function startRoses() {
+            for(let i = 0; i < 8; i++) {
+                setTimeout(() => {
+                    createRose();
+                    setTimeout(() => createRose(), 200);
+                }, i * 800);
+            }
+        }
+
+        function generateStory() {
+            const name1 = document.getElementById('name1').value.trim();
+            const name2 = document.getElementById('name2').value.trim();
+            const meetDate = new Date(document.getElementById('meetDate').value);
+
+            if (!name1 || !name2 || isNaN(meetDate.getTime())) {
+                alert('请填写完整信息');
+                return;
+            }
+
+            const today = new Date();
+            const daysKnown = Math.floor((today - meetDate) / (1000 * 60 * 60 * 24));
+            const monthsKnown = Math.floor(daysKnown / 30);
+            const yearsKnown = Math.floor(monthsKnown / 12);
+
+            const seasons = ['春', '夏', '秋', '冬'];
+            const meetSeason = seasons[Math.floor((meetDate.getMonth() + 1) / 3) % 4];
+
+            const weatherDescriptions = {
+                春: ['和煦的阳光', '温柔的春风', '细雨绵绵', '百花盛开'],
+                夏: ['明媚的阳光', '清爽的微风', '骄阳似火', '蝉鸣阵阵'],
+                秋: ['金色的阳光', '清凉的秋风', '落叶纷飞', '天高云淡'],
+                冬: ['温暖的暖阳', '寒冷的北风', '雪花飘飘', '冬日暖阳']
+            };
+
+            const timeDescriptions = {
+                早晨: ['晨光熹微', '朝露未晞', '晨曦初现'],
+                中午: ['阳光正好', '万物生辉', '天空湛蓝'],
+                下午: ['暖阳西斜', '金光闪耀', '温柔午后'],
+                傍晚: ['夕阳西下', '晚霞绚烂', '暮色苍茫']
+            };
+
+            const emotions = ['心跳加速', '目光交织', '会心一笑', '温暖如春'];
+            const places = ['咖啡馆', '图书馆', '公园长椅', '街角转弯处', '校园小径', '地铁站台'];
+
+            const randomWeather = weatherDescriptions[meetSeason][Math.floor(Math.random() * weatherDescriptions[meetSeason].length)];
+            const randomTime = Object.keys(timeDescriptions)[Math.floor(Math.random() * Object.keys(timeDescriptions).length)];
+            const randomTimeDesc = timeDescriptions[randomTime][Math.floor(Math.random() * timeDescriptions[randomTime].length)];
+            const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+            const randomPlace = places[Math.floor(Math.random() * places.length)];
+
+            let timeDescription = '';
+            if (yearsKnown > 0) {
+                timeDescription = `${yearsKnown}年${monthsKnown % 12}个月`;
+            } else {
+                timeDescription = `${monthsKnown}个月`;
+            }
+
+            const story = `那是${meetSeason}天的${randomTime}，${randomWeather}下的${randomPlace}。
+
+${randomTimeDesc}的光线中，${name1}与${name2}不期而遇。
+那一刻，${randomEmotion}，仿佛整个世界都安静了下来。
+
+这一切恍如昨日，但时光悄然流逝，转眼间我们已经相识${timeDescription}了。
+
+${daysKnown}个日夜，是我们共同书写的故事长度。
+每一个清晨都是新的开始，每一个黄昏都值得铭记。
+我们一起看过春日的繁花似锦，夏日的骄阳似火，
+秋日的金风玉露，冬日的皑皑白雪。
+
+这不仅仅是一段时光，
+更是两个灵魂相遇、相知、相守的美丽过程。
+我们携手走过的每一步，都是这段故事最动人的注脚。
+
+愿我们的故事，
+如同四季轮回般生生不息，
+在时光的长河中延续，
+写下属于我们的永恒篇章。`;
+
+            document.getElementById('storyContent').innerText = story;
+            document.getElementById('storyContainer').style.display = 'block';
+            startRoses();
+        }
+
+        function saveAsWebPage() {
+            const content = document.documentElement.outerHTML;
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '我们的故事.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
